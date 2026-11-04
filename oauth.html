@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Teddy HQ — מתחבר לאינסטגרם</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Arial, sans-serif; background: #fffbf2; color: #1f1a14; display: flex; min-height: 100vh; align-items: center; justify-content: center; margin: 0; }
+      .card { background: #fff; border-radius: 20px; padding: 28px; max-width: 360px; text-align: center; box-shadow: 0 8px 24px -12px rgba(0,0,0,.2); }
+      .big { font-size: 56px; }
+      a { color: #c07a0f; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="big" id="icon">🦁</div>
+      <h2 id="title">מחבר את האינסטגרם של טדי…</h2>
+      <p id="msg">רגע אחד</p>
+      <p><a href="./#/settings">חזרה לאפליקציה</a></p>
+    </div>
+    <script>
+      (async () => {
+        const q = new URLSearchParams(location.search);
+        const code = q.get('code');
+        const state = q.get('state');
+        const err = q.get('error_description') || q.get('error');
+        const show = (icon, title, msg) => {
+          document.getElementById('icon').textContent = icon;
+          document.getElementById('title').textContent = title;
+          document.getElementById('msg').textContent = msg;
+        };
+        if (err || !code) return show('😕', 'ההתחברות בוטלה', err || 'לא התקבל קוד מ-Meta');
+        const base = localStorage.getItem('teddy.apiBaseManual') || localStorage.getItem('teddy.apiBase');
+        const token = localStorage.getItem('teddy.token');
+        if (!base || !token) return show('🔒', 'צריך להתחבר לאפליקציה קודם', 'פתח את Teddy HQ, היכנס, ונסה שוב מההגדרות');
+        try {
+          const r = await fetch(base + '/api/ig/oauth/exchange', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ code, state }),
+          });
+          const j = await r.json();
+          if (!r.ok) throw new Error((j.error && j.error.message) || 'שגיאה ' + r.status);
+          show('🎉', 'מחובר כ-@' + j.username, 'מייבא עכשיו את כל הפוסטים והסטטיסטיקות. מעביר אותך לאפליקציה…');
+          setTimeout(() => (location.href = './#/settings'), 2500);
+        } catch (e) {
+          show('❌', 'ההתחברות נכשלה', e.message);
+        }
+      })();
+    </script>
+  </body>
+</html>
